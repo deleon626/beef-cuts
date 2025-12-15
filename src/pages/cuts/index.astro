@@ -1,0 +1,181 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import CutCard from '../../components/CutCard';
+import FilterBar from '../../components/FilterBar';
+import SearchBar from '../../components/SearchBar';
+import { allCuts } from '../../data/cuts';
+---
+
+<Layout title="All Cuts" description="Browse all beef cuts with filters for primal cut, tenderness, fat content, price, and cooking methods.">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">All Beef Cuts</h1>
+      <p class="text-gray-600">
+        Explore our collection of {allCuts.length} cuts from all primal regions.
+      </p>
+    </div>
+
+    <!-- Search and Filters (React Island) -->
+    <div class="mb-8 space-y-4" id="filter-container">
+      <SearchBar client:load cuts={allCuts} />
+      <FilterBar client:load />
+    </div>
+
+    <!-- Cuts Grid -->
+    <div id="cuts-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {allCuts.map((cut) => (
+        <div data-cut-id={cut.id} data-name={cut.name.toLowerCase()} data-primal={cut.primalCut} data-toughness={cut.toughness} data-fat={cut.fatContent} data-price={cut.priceRange} data-tokusen={cut.isTokusenAvailable} data-wagyu={cut.isWagyuRecommended} data-methods={cut.recommendedMethods.join(',')} data-synonyms={[...cut.synonyms.usa, ...cut.synonyms.uk, ...cut.synonyms.australia, ...cut.synonyms.japanese, ...cut.synonyms.french, ...(cut.synonyms.korean || [])].join(',').toLowerCase()}>
+          <a href={`/cuts/${cut.id}`}>
+            <CutCard cut={cut} client:load />
+          </a>
+        </div>
+      ))}
+    </div>
+
+    <!-- No Results Message -->
+    <div id="no-results" class="hidden text-center py-12">
+      <p class="text-gray-500 text-lg">No cuts match your filters.</p>
+      <button id="clear-filters" class="mt-4 text-red-600 hover:text-red-800 font-medium">
+        Clear all filters
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Client-side filtering logic
+    document.addEventListener('DOMContentLoaded', () => {
+      const grid = document.getElementById('cuts-grid');
+      const noResults = document.getElementById('no-results');
+      const cards = grid?.querySelectorAll('[data-cut-id]');
+
+      // Default filter state
+      const defaultFilters = {
+        primalCuts: [] as string[],
+        toughnessRange: [1, 10] as [number, number],
+        fatContent: [] as string[],
+        priceRange: [] as string[],
+        cookingMethods: [] as string[],
+        tokusenOnly: false,
+        wagyuOnly: false,
+        searchQuery: '',
+      };
+
+      // Filter state (sync with FilterBar component via custom events)
+      let filters = { ...defaultFilters };
+
+      // Parse URL params on load
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('tokusen') === 'true') {
+        filters.tokusenOnly = true;
+        window.dispatchEvent(new CustomEvent('setFilters', { detail: { tokusenOnly: true } }));
+      }
+      if (urlParams.get('wagyu') === 'true') {
+        filters.wagyuOnly = true;
+        window.dispatchEvent(new CustomEvent('setFilters', { detail: { wagyuOnly: true } }));
+      }
+      const primalParam = urlParams.get('primal');
+      if (primalParam) {
+        filters.primalCuts = [primalParam];
+        window.dispatchEvent(new CustomEvent('setFilters', { detail: { primalCuts: [primalParam] } }));
+      }
+
+      function applyFilters() {
+        let visibleCount = 0;
+
+        cards?.forEach((card) => {
+          const name = card.getAttribute('data-name') || '';
+          const synonyms = card.getAttribute('data-synonyms') || '';
+          const primal = card.getAttribute('data-primal');
+          const toughness = parseInt(card.getAttribute('data-toughness') || '5');
+          const fat = card.getAttribute('data-fat');
+          const price = card.getAttribute('data-price');
+          const tokusen = card.getAttribute('data-tokusen') === 'true';
+          const wagyu = card.getAttribute('data-wagyu') === 'true';
+          const methods = card.getAttribute('data-methods')?.split(',') || [];
+
+          let visible = true;
+
+          // Search query filter
+          if (filters.searchQuery.trim()) {
+            const query = filters.searchQuery.toLowerCase();
+            const matchesName = name.includes(query);
+            const matchesSynonyms = synonyms.includes(query);
+            if (!matchesName && !matchesSynonyms) {
+              visible = false;
+            }
+          }
+
+          // Primal filter
+          if (filters.primalCuts.length > 0 && !filters.primalCuts.includes(primal)) {
+            visible = false;
+          }
+
+          // Toughness range
+          if (toughness < filters.toughnessRange[0] || toughness > filters.toughnessRange[1]) {
+            visible = false;
+          }
+
+          // Fat content
+          if (filters.fatContent.length > 0 && !filters.fatContent.includes(fat)) {
+            visible = false;
+          }
+
+          // Price range
+          if (filters.priceRange.length > 0 && !filters.priceRange.includes(price)) {
+            visible = false;
+          }
+
+          // Cooking methods
+          if (filters.cookingMethods.length > 0 && !filters.cookingMethods.some(m => methods.includes(m))) {
+            visible = false;
+          }
+
+          // Tokusen only
+          if (filters.tokusenOnly && !tokusen) {
+            visible = false;
+          }
+
+          // Wagyu only
+          if (filters.wagyuOnly && !wagyu) {
+            visible = false;
+          }
+
+          (card as HTMLElement).style.display = visible ? '' : 'none';
+          if (visible) visibleCount++;
+        });
+
+        // Show/hide no results message
+        if (noResults) {
+          noResults.classList.toggle('hidden', visibleCount > 0);
+        }
+        if (grid) {
+          grid.classList.toggle('hidden', visibleCount === 0);
+        }
+
+        // Dispatch result count for FilterBar
+        window.dispatchEvent(new CustomEvent('resultCount', { detail: visibleCount }));
+      }
+
+      // Listen for filter changes from React components
+      window.addEventListener('filterChange', ((e: CustomEvent) => {
+        filters = { ...filters, ...e.detail };
+        applyFilters();
+      }) as EventListener);
+
+      // Listen for clear filters event
+      window.addEventListener('clearFilters', () => {
+        filters = { ...defaultFilters };
+        applyFilters();
+      });
+
+      // Clear filters button
+      document.getElementById('clear-filters')?.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('clearFilters'));
+      });
+
+      // Apply initial filters (for URL params)
+      applyFilters();
+    });
+  </script>
+</Layout>

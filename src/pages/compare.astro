@@ -1,0 +1,34 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ComparisonTool from '../components/ComparisonTool';
+import { allCuts } from '../data/cuts';
+---
+
+<Layout title="Compare Cuts" description="Compare beef cuts side-by-side to find the perfect option for your needs.">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">Compare Cuts</h1>
+      <p class="text-gray-600">
+        Select up to 3 cuts to compare their attributes, cooking methods, and more.
+      </p>
+    </div>
+
+    <!-- Comparison Tool -->
+    <ComparisonTool
+      client:load
+      allCuts={allCuts}
+    />
+
+    <!-- Tips -->
+    <div class="mt-12 bg-blue-50 rounded-lg p-6">
+      <h2 class="font-semibold text-blue-900 mb-3">Comparison Tips</h2>
+      <ul class="space-y-2 text-blue-800 text-sm">
+        <li>• <strong>Green rings</strong> highlight the best value for tenderness and price</li>
+        <li>• Click on a cut name in the table to view its full detail page</li>
+        <li>• Share your comparison by copying the URL - it saves your selection</li>
+        <li>• Try comparing cuts from the same primal to understand their differences</li>
+      </ul>
+    </div>
+  </div>
+</Layout>

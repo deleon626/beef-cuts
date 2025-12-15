@@ -1,0 +1,274 @@
+# TASK: Create Cut Detail Page
+# TYPE: implement
+# PRIORITY: high
+# TIMEOUT: 12
+
+## Objective
+Create dynamic cut detail pages at `src/pages/cuts/[slug].astro`.
+
+## Context
+Individual pages for each cut showing all details, synonyms, attributes, and related cuts.
+
+## Deliverables
+Create `/Users/dennyleonardo/Downloads/beef-cuts/src/pages/cuts/[slug].astro`:
+
+```astro
+---
+import Layout from '../../layouts/Layout.astro';
+import { ToughnessBadge, FatContentBadge, PriceBadge, MarblingBadge, FlavorBadge, CookingMethodBadge } from '../../components/AttributeBadge';
+import { SynonymList } from '../../components/SynonymList';
+import { allCuts, getRelatedCuts, getAlternativeCuts } from '../../data/cuts';
+import { getPrimalCut } from '../../data/primalCuts';
+import type { BeefCut } from '../../data/types';
+
+export function getStaticPaths() {
+  return allCuts.map((cut) => ({
+    params: { slug: cut.id },
+    props: { cut },
+  }));
+}
+
+interface Props {
+  cut: BeefCut;
+}
+
+const { cut } = Astro.props;
+const primal = getPrimalCut(cut.primalCut);
+const relatedCuts = getRelatedCuts(cut.id).slice(0, 4);
+const alternativeCuts = getAlternativeCuts(cut.id);
+---
+
+<Layout title={cut.name} description={cut.description}>
+  <article class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-6 text-sm">
+      <ol class="flex items-center gap-2 text-gray-500">
+        <li><a href="/" class="hover:text-gray-900">Home</a></li>
+        <li>/</li>
+        <li><a href="/cuts" class="hover:text-gray-900">Cuts</a></li>
+        <li>/</li>
+        <li><a href={`/primal/${primal?.slug}`} class="hover:text-gray-900">{cut.primalCut}</a></li>
+        <li>/</li>
+        <li class="text-gray-900 font-medium">{cut.name}</li>
+      </ol>
+    </nav>
+
+    <!-- Header -->
+    <header class="mb-8">
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm font-medium rounded-full">
+          {cut.primalCut}
+        </span>
+        {cut.isTokusenAvailable && (
+          <span class="px-3 py-1 bg-red-100 text-red-700 text-sm font-medium rounded-full">
+            Tokusen Available
+          </span>
+        )}
+        {cut.isPrimeCut && (
+          <span class="px-3 py-1 bg-amber-100 text-amber-700 text-sm font-medium rounded-full">
+            Prime Cut
+          </span>
+        )}
+        {cut.isWagyuRecommended && (
+          <span class="px-3 py-1 bg-purple-100 text-purple-700 text-sm font-medium rounded-full">
+            Wagyu Recommended
+          </span>
+        )}
+      </div>
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">{cut.name}</h1>
+      <p class="text-xl text-gray-600">{cut.description}</p>
+    </header>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left Column: Details -->
+      <div class="lg:col-span-2 space-y-8">
+        <!-- Attributes -->
+        <section class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">Attributes</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm text-gray-500 mb-1">Tenderness</p>
+              <ToughnessBadge value={cut.toughness} client:load />
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">Fat Content</p>
+              <FatContentBadge value={cut.fatContent} client:load />
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">Price Range</p>
+              <PriceBadge value={cut.priceRange} showRange pricePerKg={cut.pricePerKgUsd} client:load />
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">Flavor</p>
+              <FlavorBadge value={cut.flavorIntensity} client:load />
+            </div>
+            {cut.marblingScore && (
+              <div class="col-span-2">
+                <p class="text-sm text-gray-500 mb-1">Typical Marbling</p>
+                <MarblingBadge score={cut.marblingScore} client:load />
+              </div>
+            )}
+          </div>
+        </section>
+
+        <!-- Cooking Methods -->
+        <section class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">Cooking Methods</h2>
+          <div class="flex flex-wrap gap-2 mb-4">
+            {cut.recommendedMethods.map((method) => (
+              <CookingMethodBadge method={method} isRecommended={true} client:load />
+            ))}
+          </div>
+          {cut.bestDoneness && cut.bestDoneness.length > 0 && (
+            <div class="mt-4">
+              <p class="text-sm text-gray-500 mb-2">Best Doneness</p>
+              <p class="text-gray-700">{cut.bestDoneness.join(', ')}</p>
+            </div>
+          )}
+          {cut.idealThicknessCm && (
+            <div class="mt-4">
+              <p class="text-sm text-gray-500 mb-2">Ideal Thickness</p>
+              <p class="text-gray-700">{cut.idealThicknessCm} cm</p>
+            </div>
+          )}
+          {cut.restingTimeMinutes && (
+            <div class="mt-4">
+              <p class="text-sm text-gray-500 mb-2">Resting Time</p>
+              <p class="text-gray-700">{cut.restingTimeMinutes} minutes</p>
+            </div>
+          )}
+        </section>
+
+        <!-- Best Uses -->
+        <section class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">Best Uses</h2>
+          <div class="flex flex-wrap gap-2">
+            {cut.bestUses.map((use) => (
+              <span class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm">
+                {use}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        <!-- International Names -->
+        <section class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">International Names</h2>
+          <SynonymList synonyms={cut.synonyms} client:load />
+        </section>
+      </div>
+
+      <!-- Right Column: Sidebar -->
+      <div class="space-y-6">
+        <!-- Quick Info -->
+        <div class="bg-gray-50 rounded-lg p-6">
+          <h3 class="font-semibold text-gray-900 mb-4">Quick Info</h3>
+          <dl class="space-y-3 text-sm">
+            <div>
+              <dt class="text-gray-500">Primal Cut</dt>
+              <dd class="text-gray-900 font-medium">
+                <a href={`/primal/${primal?.slug}`} class="hover:text-red-600">
+                  {cut.primalCut}
+                </a>
+              </dd>
+            </div>
+            {cut.subprimalCut && (
+              <div>
+                <dt class="text-gray-500">Subprimal</dt>
+                <dd class="text-gray-900">{cut.subprimalCut}</dd>
+              </div>
+            )}
+            <div>
+              <dt class="text-gray-500">Location</dt>
+              <dd class="text-gray-900">{cut.anatomicalLocation}</dd>
+            </div>
+            {cut.agingSuitability && cut.agingSuitability.length > 0 && (
+              <div>
+                <dt class="text-gray-500">Aging</dt>
+                <dd class="text-gray-900">{cut.agingSuitability.join(', ')}</dd>
+              </div>
+            )}
+          </dl>
+        </div>
+
+        <!-- Nutrition -->
+        {cut.nutritionPer100g && (
+          <div class="bg-gray-50 rounded-lg p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Nutrition (per 100g)</h3>
+            <dl class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Calories</dt>
+                <dd class="text-gray-900 font-medium">{cut.nutritionPer100g.calories} kcal</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Protein</dt>
+                <dd class="text-gray-900 font-medium">{cut.nutritionPer100g.protein}g</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Fat</dt>
+                <dd class="text-gray-900 font-medium">{cut.nutritionPer100g.fat}g</dd>
+              </div>
+            </dl>
+          </div>
+        )}
+
+        <!-- Compare CTA -->
+        <div class="bg-red-50 rounded-lg p-6 text-center">
+          <p class="text-red-800 font-medium mb-3">Want to compare?</p>
+          <a
+            href={`/compare?cuts=${cut.id}`}
+            class="inline-block px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Add to Compare
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Cuts -->
+    {relatedCuts.length > 0 && (
+      <section class="mt-12">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Related Cuts</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {relatedCuts.map((related) => (
+            <a
+              href={`/cuts/${related.id}`}
+              class="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+            >
+              <h3 class="font-medium text-gray-900">{related.name}</h3>
+              <p class="text-sm text-gray-500">{related.primalCut}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Budget Alternatives -->
+    {alternativeCuts.length > 0 && (
+      <section class="mt-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Budget-Friendly Alternatives</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {alternativeCuts.map((alt) => (
+            <a
+              href={`/cuts/${alt.id}`}
+              class="bg-green-50 rounded-lg p-4 hover:bg-green-100 transition-colors"
+            >
+              <h3 class="font-medium text-gray-900">{alt.name}</h3>
+              <p class="text-sm text-green-700">{alt.priceRange}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+  </article>
+</Layout>
+```
+
+## Success Criteria
+- [ ] Dynamic routing for all cuts
+- [ ] All attributes displayed with badges
+- [ ] Full synonym list with flags
+- [ ] Related cuts section
+- [ ] Budget alternatives section
+- [ ] Compare CTA

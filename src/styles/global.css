@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+/* Custom theme variables */
+@theme {
+  --color-beef-50: #fef2f2;
+  --color-beef-100: #fee2e2;
+  --color-beef-200: #fecaca;
+  --color-beef-300: #fca5a5;
+  --color-beef-400: #f87171;
+  --color-beef-500: #ef4444;
+  --color-beef-600: #dc2626;
+  --color-beef-700: #b91c1c;
+  --color-beef-800: #991b1b;
+  --color-beef-900: #7f1d1d;
+}
+
+/* Base styles */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom component styles */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-tender {
+  @apply bg-green-100 text-green-800;
+}
+
+.badge-moderate {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.badge-tough {
+  @apply bg-red-100 text-red-800;
+}
+
+.badge-price-low {
+  @apply bg-emerald-100 text-emerald-800;
+}
+
+.badge-price-mid {
+  @apply bg-amber-100 text-amber-800;
+}
+
+.badge-price-high {
+  @apply bg-rose-100 text-rose-800;
+}
+
+.badge-price-premium {
+  @apply bg-purple-100 text-purple-800;
+}
+
+/* Card hover effects */
+.cut-card {
+  @apply bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden transition-all duration-200;
+}
+
+.cut-card:hover {
+  @apply shadow-lg border-stone-300 -translate-y-1;
+}
+
+/* SVG Diagram interactions */
+.primal-region {
+  @apply cursor-pointer transition-all duration-200;
+  fill: currentColor;
+}
+
+.primal-region:hover {
+  @apply opacity-80;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-stone-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-stone-400 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-stone-500;
+}

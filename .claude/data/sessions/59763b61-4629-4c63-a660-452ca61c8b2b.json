@@ -1,0 +1,9 @@
+{
+  "session_id": "59763b61-4629-4c63-a660-452ca61c8b2b",
+  "prompts": [
+    "troubleshoot cuts filter feature. --seq. find out what are the possible causes. use --sub",
+    "yes",
+    "i'm at the cuts page. when i click the buttons and sliders still nothing happens. ultrathink",
+    "now when i toggle filters it works. but it doesn't automatically filter the cuts grid. do i need to press a submit button or something? if i refresh the state dissapears."
+  ]
+}
